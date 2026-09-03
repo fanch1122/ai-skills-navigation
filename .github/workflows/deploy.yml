@@ -24,10 +24,14 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Copy data into site (for relative fetch)
+        run: |
+          cp -R data site/data
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # 将 site/ 目录作为静态站点根目录上传
+          # 将 site/ 目录（含 data/）作为静态站点根目录上传
           path: site
 
   deploy:

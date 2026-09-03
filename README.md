@@ -17,10 +17,18 @@
 ## 🚀 快速开始
 
 ```bash
-# 本地预览（任选一种构建方式或直接打开）
+# 将数据目录复制进 site/（使相对路径 data/skills.json 可访问），然后本地预览：
+# Windows:
+Copy-Item -Recurse data site\data
+# Linux/macOS:
+# cp -R data site/data
+
 python -m http.server 8000 --directory site
 # 浏览器访问 http://localhost:8000
 ```
+
+> 说明：部署到 GitHub Pages 时工作流会自动把 `data/` 复制进 `site/data/`，
+> 因此网页通过相对路径 `data/skills.json` 读取数据库。
 
 ## 📦 如何新增一个 Skill
 
