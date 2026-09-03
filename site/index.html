@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AI Skill & Agent 导航站：收录 Codex、Claude、DeepSeek(DSH) 等平台的公益与开源 Skill。" />
+  <title>AI Skill & Agent 导航站</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="container">
+      <h1>🤖 AI Skill &amp; Agent 导航站</h1>
+      <p class="subtitle">收录 Codex · Claude · DeepSeek (DSH) 等平台的公益与开源 Skill</p>
+      <div class="toolbar">
+        <input
+          type="search"
+          id="search"
+          placeholder="搜索名称、描述或标签…"
+          aria-label="搜索 Skill"
+        />
+        <select id="platformFilter" aria-label="按平台筛选">
+          <option value="">全部平台</option>
+          <option value="Codex">Codex</option>
+          <option value="Claude">Claude</option>
+          <option value="DeepSeek (DSH)">DeepSeek</option>
+          <option value="General">通用</option>
+        </select>
+        <select id="categoryFilter" aria-label="按分类筛选">
+          <option value="">全部分类</option>
+        </select>
+        <label class="free-toggle">
+          <input type="checkbox" id="freeOnly" />
+          仅看免费
+        </label>
+      </div>
+      <div id="stats" class="stats"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <p id="count" class="count"></p>
+    <div id="grid" class="grid"></div>
+    <p id="empty" class="empty hidden">没有找到匹配的 Skill，换个关键词试试吧。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>数据来源：<code>data/skills.json</code> · 提交新 Skill 请看 <code>SKILL.md</code></p>
+      <p>
+        平台标签颜色：<span class="badge codex">Codex</span>
+        <span class="badge claude">Claude</span>
+        <span class="badge dsh">DeepSeek</span>
+        <span class="badge general">通用</span>
+      </p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+[
+  {
+    "id": "skill-001",
+    "name": "ArXiv Paper Summarizer",
+    "platform": ["Claude", "Codex"],
+    "category": "科研辅助",
+    "url": "https://github.com/example/arxiv-summarizer",
+    "description": "自动抓取并总结 ArXiv 论文核心贡献与公式解析，一键生成结构化摘要。",
+    "is_free": true,
+    "tags": ["论文", "PDF", "公益"],
+    "date_added": "2026-09-03"
+  },
+  {
+    "id": "skill-002",
+    "name": "DeepSeek Code Refactor",
+    "platform": ["DeepSeek (DSH)"],
+    "category": "代码开发",
+    "url": "https://github.com/example/dsh-code-refactor",
+    "description": "基于 DeepSeek 的 Python 代码重构与性能优化 Prompt/Skill，自动生成优化建议。",
+    "is_free": true,
+    "tags": ["Python", "重构", "开源"],
+    "date_added": "2026-09-03"
+  },
+  {
+    "id": "skill-003",
+    "name": "Codex Test Generator",
+    "platform": ["Codex"],
+    "category": "代码开发",
+    "url": "https://github.com/example/codex-test-generator",
+    "description": "根据函数签名自动生成单元测试与边界用例，支持多种测试框架。",
+    "is_free": true,
+    "tags": ["测试", "单元测试", "开源"],
+    "date_added": "2026-09-03"
+  },
+  {
+    "id": "skill-004",
+    "name": "Claude Content Localizer",
+    "platform": ["Claude"],
+    "category": "内容创作",
+    "url": "https://github.com/example/claude-content-localizer",
+    "description": "将中英文内容本地化适配多地区风格，保留术语一致性。",
+    "is_free": false,
+    "tags": ["翻译", "本地化", "文案"],
+    "date_added": "2026-09-03"
+  },
+  {
+    "id": "skill-005",
+    "name": "DSH Goal Runner",
+    "platform": ["DeepSeek (DSH)"],
+    "category": "自动化",
+    "url": "https://github.com/example/dsh-goal-runner",
+    "description": "基于 DeepSeek Harness 的多轮目标跟踪与任务编排 Skill，支持长跑型自动化。",
+    "is_free": true,
+    "tags": ["自动化", "多轮", "公益"],
+    "date_added": "2026-09-03"
+  },
+  {
+    "id": "skill-006",
+    "name": "通用 Prompt 优化器",
+    "platform": ["General"],
+    "category": "提示词工程",
+    "url": "https://github.com/example/prompt-optimizer",
+    "description": "跨平台通用 Prompt 优化模板，提升指令清晰度与输出质量。",
+    "is_free": true,
+    "tags": ["Prompt", "通用", "模板"],
+    "date_added": "2026-09-03"
+  }
+]
