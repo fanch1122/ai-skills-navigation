@@ -29,22 +29,33 @@ PLATFORM_LABELS = {
 
 
 def render_table(skills):
-    """生成 README 中使用的 Markdown 表格。"""
-    lines = [
-        "| ID | 名称 | 平台 | 分类 | 免费 | 描述 |",
-        "| --- | --- | --- | --- | --- | --- |",
-    ]
-    for s in sorted(skills, key=lambda x: x.get("id", "")):
-        platforms = "、".join(PLATFORM_LABELS.get(p, p) for p in s.get("platform", []))
-        free = "✅" if s.get("is_free") else "❌"
-        name = s.get("name", "")
-        url = s.get("url", "#")
-        desc = s.get("description", "").replace("|", "\\|")
-        lines.append(
-            f"| `{s.get('id', '')}` | [{name}]({url}) | {platforms} | "
-            f"{s.get('category', '')} | {free} | {desc} |"
-        )
-    return "\n".join(lines) + "\n"
+    """生成 README 中使用的 Markdown 表格，按分类分组。"""
+    # 按分类分组，分类内按 id 排序
+    from collections import OrderedDict
+
+    by_cat = OrderedDict()
+    for s in sorted(skills, key=lambda x: (x.get("category", "其他"), x.get("id", ""))):
+        by_cat.setdefault(s.get("category", "其他"), []).append(s)
+
+    blocks = []
+    for cat, items in by_cat.items():
+        rows = [
+            f"### {cat}",
+            "",
+            "| ID | 名称 | 平台 | 免费 | 描述 |",
+            "| --- | --- | --- | --- | --- |",
+        ]
+        for s in items:
+            platforms = "、".join(PLATFORM_LABELS.get(p, p) for p in s.get("platform", []))
+            free = "✅" if s.get("is_free") else "❌"
+            name = s.get("name", "")
+            url = s.get("url", "#")
+            desc = s.get("description", "").replace("|", "\\|")
+            rows.append(
+                f"| `{s.get('id', '')}` | [{name}]({url}) | {platforms} | {free} | {desc} |"
+            )
+        blocks.append("\n".join(rows))
+    return "\n\n".join(blocks) + "\n"
 
 
 def main():
