@@ -1,5 +1,5 @@
 // AI Skill & Agent 导航站前端逻辑
-// 读取 data/skills.json 并进行搜索、平台筛选、分类筛选。
+// 读取 data/skills.json 并进行搜索、平台筛选、分类多选筛选、排序与主题切换。
 
 const PLATFORM_CLASS = {
   Codex: "codex",
@@ -8,23 +8,30 @@ const PLATFORM_CLASS = {
   General: "general",
 };
 
+const PLATFORM_LABEL = {
+  Codex: "Codex",
+  Claude: "Claude",
+  "DeepSeek (DSH)": "DeepSeek",
+  General: "通用",
+};
+
 let skillsData = [];
 
 // 各元素
 const searchEl = document.getElementById("search");
+const sortEl = document.getElementById("sortSelect");
 const platformEl = document.getElementById("platformFilter");
-const categoryEl = document.getElementById("categoryFilter");
+const categoryChipsEl = document.getElementById("categoryChips");
 const freeOnlyEl = document.getElementById("freeOnly");
+const themeToggleEl = document.getElementById("themeToggle");
 const statsEl = document.getElementById("stats");
 const countEl = document.getElementById("count");
 const gridEl = document.getElementById("grid");
 const emptyEl = document.getElementById("empty");
 
-function badgeFor(platform) {
-  const cls = PLATFORM_CLASS[platform] || "general";
-  const label = platform === "DeepSeek (DSH)" ? "DeepSeek" : platform;
-  return `<span class="badge ${cls}">${escapeHtml(label)}</span>`;
-}
+// 状态
+let activeCategories = new Set(); // 空集合 = 全部分类
+const platformBtnEls = Array.from(platformEl.querySelectorAll(".seg-btn"));
 
 function escapeHtml(str) {
   return String(str)
@@ -32,6 +39,12 @@ function escapeHtml(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function badgeFor(platform) {
+  const cls = PLATFORM_CLASS[platform] || "general";
+  const label = PLATFORM_LABEL[platform] || platform;
+  return `<span class="badge ${cls}"><span class="dot ${cls}"></span>${escapeHtml(label)}</span>`;
 }
 
 function renderCard(skill) {
@@ -45,7 +58,7 @@ function renderCard(skill) {
   const name = escapeHtml(skill.name || "");
   const url = skill.url || "#";
   return `
-    <article class="card">
+    <article class="card glass-panel">
       <h3><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${name}</a></h3>
       <div class="platforms">${platforms}</div>
       <p class="desc">${desc}</p>
@@ -57,15 +70,20 @@ function renderCard(skill) {
     </article>`;
 }
 
-function applyFilters() {
+function currentlySelectedPlatform() {
+  const active = platformBtnEls.find((b) => b.classList.contains("active"));
+  return active ? active.dataset.value : "";
+}
+
+function filterSkills() {
   const q = (searchEl.value || "").trim().toLowerCase();
-  const platform = platformEl.value;
-  const category = categoryEl.value;
+  const platform = currentlySelectedPlatform();
   const freeOnly = freeOnlyEl.checked;
+  const hasCategoryFilter = activeCategories.size > 0;
 
   const results = skillsData.filter((s) => {
     if (platform && !(s.platform || []).includes(platform)) return false;
-    if (category && s.category !== category) return false;
+    if (hasCategoryFilter && !activeCategories.has(s.category)) return false;
     if (freeOnly && !s.is_free) return false;
     if (q) {
       const haystack = [
@@ -82,16 +100,72 @@ function applyFilters() {
     return true;
   });
 
+  return results;
+}
+
+function sortResults(results) {
+  const mode = sortEl.value;
+  const sorted = results.slice();
+  if (mode === "name") {
+    sorted.sort((a, b) => String(a.name).localeCompare(String(b.name), "zh-Hans-CN"));
+  } else if (mode === "date") {
+    sorted.sort((a, b) =>
+      String(b.date_added || "").localeCompare(String(a.date_added || ""))
+    );
+  }
+  return sorted;
+}
+
+function applyFilters() {
+  const results = sortResults(filterSkills());
+
   countEl.textContent = `共 ${results.length} / ${skillsData.length} 条记录`;
   emptyEl.classList.toggle("hidden", results.length > 0);
   gridEl.innerHTML = results.map(renderCard).join("");
 }
 
 function buildCategories() {
-  const cats = [...new Set(skillsData.map((s) => s.category).filter(Boolean))];
-  categoryEl.innerHTML =
-    '<option value="">全部分类</option>' +
-    cats.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  const cats = [...new Set(skillsData.map((s) => s.category).filter(Boolean))].sort(
+    (a, b) => a.localeCompare(b, "zh-Hans-CN")
+  );
+  const allChip = document.createElement("button");
+  allChip.type = "button";
+  allChip.className = "chip active";
+  allChip.dataset.value = "";
+  allChip.textContent = "全部";
+  allChip.addEventListener("click", () => {
+    activeCategories.clear();
+    updateChipState();
+    applyFilters();
+  });
+
+  categoryChipsEl.appendChild(allChip);
+
+  cats.forEach((c) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip";
+    chip.dataset.value = c;
+    chip.textContent = c;
+    chip.addEventListener("click", () => {
+      if (activeCategories.has(c)) activeCategories.delete(c);
+      else activeCategories.add(c);
+      // 若通过点选重新选择了任一分类，则取消「全部」；全部清空时回到「全部」态
+      updateChipState();
+      applyFilters();
+    });
+    categoryChipsEl.appendChild(chip);
+  });
+}
+
+function updateChipState() {
+  const chips = categoryChipsEl.querySelectorAll(".chip");
+  chips.forEach((chip) => {
+    chip.classList.toggle("active", activeCategories.has(chip.dataset.value));
+  });
+  // 「全部」chip 在所有分类都未选中时高亮
+  const allChip = categoryChipsEl.querySelector('.chip[data-value=""]');
+  if (allChip) allChip.classList.toggle("active", activeCategories.size === 0);
 }
 
 function buildStats() {
@@ -104,18 +178,52 @@ function buildStats() {
   );
   const parts = [`收录 ${total} 个 Skill`];
   for (const [p, n] of Object.entries(byPlatform)) {
-    parts.push(`${p}: ${n}`);
+    parts.push(`${PLATFORM_LABEL[p] || p}: ${n}`);
   }
   statsEl.textContent = parts.join(" · ");
 }
 
+/* ---------------- 主题切换 ---------------- */
+function getSavedTheme() {
+  try {
+    return localStorage.getItem("dsh-nav-theme") || "";
+  } catch (e) {
+    return "";
+  }
+}
+
+function setTheme(mode) {
+  // mode: '' (跟随系统), 'light', 'dark'
+  const root = document.documentElement;
+  if (mode === "dark" || (mode === "" && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+    root.setAttribute("data-theme", "dark");
+  } else {
+    root.setAttribute("data-theme", "light");
+  }
+  themeToggleEl.setAttribute("aria-checked", String(mode !== "light"));
+  try {
+    localStorage.setItem("dsh-nav-theme", mode);
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+function cycleTheme() {
+  const current = getSavedTheme();
+  const next = current === "dark" ? "light" : "dark";
+  setTheme(next);
+}
+
 async function init() {
+  // 初始化主题
+  const savedTheme = getSavedTheme();
+  setTheme(savedTheme || "");
+
   try {
     const res = await fetch("data/skills.json");
     skillsData = await res.json();
   } catch (err) {
-    gridEl.innerHTML =
-      '<p class="empty">无法加载 data/skills.json，请确认文件存在。</p>';
+    gridEl.innerHTML = '<p class="empty">无法加载 data/skills.json，请确认文件存在。</p>';
     console.error(err);
     return;
   }
@@ -126,8 +234,30 @@ async function init() {
 
 // 监听变化
 searchEl.addEventListener("input", applyFilters);
-platformEl.addEventListener("change", applyFilters);
-categoryEl.addEventListener("change", applyFilters);
+sortEl.addEventListener("change", applyFilters);
 freeOnlyEl.addEventListener("change", applyFilters);
+themeToggleEl.addEventListener("click", cycleTheme);
+themeToggleEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    cycleTheme();
+  }
+});
+
+// 平台分段控件
+platformBtnEls.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    platformBtnEls.forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    applyFilters();
+  });
+});
+
+// 跟随系统主题变化
+window
+  .matchMedia("(prefers-color-scheme: dark)")
+  .addEventListener("change", () => {
+    if (!getSavedTheme()) setTheme("");
+  });
 
 init();

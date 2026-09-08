@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,30 +10,63 @@
 <body>
   <header class="hero">
     <div class="container">
-      <h1>🤖 AI Skill &amp; Agent 导航站</h1>
+      <div class="hero-top">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true">🤖</span>
+          <h1>AI Skill &amp; Agent 导航站</h1>
+        </div>
+        <div
+          class="theme-switch"
+          id="themeToggle"
+          role="switch"
+          aria-checked="true"
+          aria-label="切换主题"
+          tabindex="0"
+        >
+          <span class="theme-icon theme-sun" aria-hidden="true">☀️</span>
+          <span class="theme-thumb" aria-hidden="true"></span>
+          <span class="theme-icon theme-moon" aria-hidden="true">🌙</span>
+        </div>
+      </div>
       <p class="subtitle">收录 Codex · Claude · DeepSeek (DSH) 等平台的公益与开源 Skill</p>
-      <div class="toolbar">
+
+      <div class="toolbar glass-panel">
         <input
           type="search"
           id="search"
           placeholder="搜索名称、描述或标签…"
           aria-label="搜索 Skill"
         />
-        <select id="platformFilter" aria-label="按平台筛选">
-          <option value="">全部平台</option>
-          <option value="Codex">Codex</option>
-          <option value="Claude">Claude</option>
-          <option value="DeepSeek (DSH)">DeepSeek</option>
-          <option value="General">通用</option>
-        </select>
-        <select id="categoryFilter" aria-label="按分类筛选">
-          <option value="">全部分类</option>
-        </select>
+        <div class="sort-wrap">
+          <label for="sortSelect">排序</label>
+          <select id="sortSelect" aria-label="排序">
+            <option value="default">默认</option>
+            <option value="name">名称 A-Z</option>
+            <option value="date">最新添加</option>
+          </select>
+        </div>
         <label class="free-toggle">
           <input type="checkbox" id="freeOnly" />
           仅看免费
         </label>
       </div>
+
+      <div class="filter-group">
+        <span class="filter-label">平台</span>
+        <div class="segmented" id="platformFilter" role="group" aria-label="按平台筛选">
+          <button type="button" class="seg-btn active" data-value="">全部</button>
+          <button type="button" class="seg-btn" data-value="Codex"><span class="dot codex"></span>Codex</button>
+          <button type="button" class="seg-btn" data-value="Claude"><span class="dot claude"></span>Claude</button>
+          <button type="button" class="seg-btn" data-value="DeepSeek (DSH)"><span class="dot dsh"></span>DeepSeek</button>
+          <button type="button" class="seg-btn" data-value="General"><span class="dot general"></span>通用</button>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-label">分类</span>
+        <div class="chips" id="categoryChips" aria-label="按分类筛选（可多选）"></div>
+      </div>
+
       <div id="stats" class="stats"></div>
     </div>
   </header>
@@ -47,8 +80,7 @@
   <footer class="footer">
     <div class="container">
       <p>数据来源：<code>data/skills.json</code> · 提交新 Skill 请看 <code>SKILL.md</code></p>
-      <p>
-        平台标签颜色：<span class="badge codex">Codex</span>
+      <p>平台标签：<span class="badge codex">Codex</span>
         <span class="badge claude">Claude</span>
         <span class="badge dsh">DeepSeek</span>
         <span class="badge general">通用</span>
