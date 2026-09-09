@@ -170,17 +170,21 @@ function updateChipState() {
 
 function buildStats() {
   const total = skillsData.length;
-  const byPlatform = {};
+  const counts = {};
   skillsData.forEach((s) =>
     (s.platform || []).forEach((p) => {
-      byPlatform[p] = (byPlatform[p] || 0) + 1;
+      counts[p] = (counts[p] || 0) + 1;
     })
   );
-  const parts = [`收录 ${total} 个 Skill`];
-  for (const [p, n] of Object.entries(byPlatform)) {
-    parts.push(`${PLATFORM_LABEL[p] || p}: ${n}`);
+  const chips = [`<span class="stat"><b>${total}</b>收录 Skill</span>`];
+  for (const p of Object.keys(counts)) {
+    const cls = PLATFORM_CLASS[p] || "general";
+    const label = PLATFORM_LABEL[p] || p;
+    chips.push(
+      `<span class="stat"><span class="dot ${cls}"></span>${escapeHtml(label)}<b>${counts[p]}</b></span>`
+    );
   }
-  statsEl.textContent = parts.join(" · ");
+  statsEl.innerHTML = chips.join("");
 }
 
 /* ---------------- 主题切换 ---------------- */
