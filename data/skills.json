@@ -1988,5 +1988,23 @@
       "市场"
     ],
     "date_added": "2026-09-03"
+  },
+  {
+    "id": "skill-116",
+    "name": "YYLO Skills",
+    "platform": [
+      "Claude",
+      "Codex"
+    ],
+    "category": "Skill 集合",
+    "url": "https://github.com/yylo-dev/yylo-skills",
+    "description": "YYLO 官方维护的开源技能集合：7 个可复用 Agent 技能（Kanban 任务、Wiki、工作流、Ralph 循环等），是 YYLO CLI 与 YYLO Ledger 的独立版本化技能来源，支持 Claude Code / Codex / Pi 安装。",
+    "is_free": true,
+    "tags": [
+      "开源",
+      "Claude",
+      "工作流"
+    ],
+    "date_added": "2026-09-18"
   }
 ]
