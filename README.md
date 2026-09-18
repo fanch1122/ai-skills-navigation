@@ -93,6 +93,7 @@ git push origin main
 | `skill-024` | [LeoYeAI/openclaw-master-skills](https://github.com/LeoYeAI/openclaw-master-skills) | 通用 | ✅ | MyClaw.ai 每周更新的 1209+ 个最佳 OpenClaw skills 精选。 |
 | `skill-025` | [anbeime/skill](https://github.com/anbeime/skill) | Claude、Codex、DeepSeek | ✅ | 最全、更新最快的 AI Agent 技能商店：文档处理、内容创作、编程、ML、自动化工作流，并抓取上万 GitHub 技能项目。 |
 | `skill-026` | [davepoon/buildwithclaude](https://github.com/davepoon/buildwithclaude) | Claude | ✅ | 一站式寻找 Claude Skills、Agents、Commands、Hooks、Plugins 与 Marketplace 集合。 |
+| `skill-116` | [YYLO Skills](https://github.com/yylo-dev/yylo-skills) | Claude、Codex | ✅ | YYLO 官方维护的开源技能集合：7 个可复用 Agent 技能（Kanban 任务、Wiki、工作流、Ralph 循环等），是 YYLO CLI 与 YYLO Ledger 的独立版本化技能来源，支持 Claude Code / Codex / Pi 安装。 |
 
 ### 产品管理
 
