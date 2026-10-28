@@ -10,6 +10,7 @@
 <body>
   <header class="hero">
     <div class="container">
+      <div class="hero-accent" aria-hidden="true"></div>
       <div class="hero-top">
         <div class="brand">
           <span class="brand-icon" aria-hidden="true">🤖</span>
@@ -19,8 +20,8 @@
           class="theme-switch"
           id="themeToggle"
           role="switch"
-          aria-checked="true"
-          aria-label="切换主题"
+          aria-checked="false"
+          aria-label="切换外观主题"
           tabindex="0"
         >
           <span class="theme-icon theme-sun" aria-hidden="true">☀️</span>
@@ -74,7 +75,14 @@
   <main class="container">
     <p id="count" class="count"></p>
     <div id="grid" class="grid"></div>
-    <p id="empty" class="empty hidden">没有找到匹配的 Skill，换个关键词试试吧。</p>
+    <div id="empty" class="empty hidden" role="status" aria-live="polite">
+      <span class="empty-icon" aria-hidden="true">• • •</span>
+      <p class="empty-title">没有匹配的 Skill</p>
+      <p class="empty-desc">换个关键词，或清除筛选条件</p>
+    </div>
+
+    <!-- 加载骨架（JS 渲染） -->
+    <div id="loading" class="loading-grid hidden" aria-label="加载中" aria-live="polite"></div>
   </main>
 
   <footer class="footer">

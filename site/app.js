@@ -223,14 +223,31 @@ async function init() {
   const savedTheme = getSavedTheme();
   setTheme(savedTheme || "");
 
+  // 显示加载骨架（12 个占位卡）
+  const loadingEl = document.getElementById("loading");
+  document.getElementById("grid").innerHTML = "";
+  loadingEl.classList.remove("hidden");
+  loadingEl.innerHTML = Array.from({ length: 12 }, () =>
+    `<div class="skeleton" aria-hidden="true">
+       <div class="s-bar s-bar tall w60"></div>
+       <div class="s-bar s-bar short"></div>
+       <div class="s-bar s-bar"></div>
+       <div class="s-bar s-bar w75"></div>
+     </div>`
+  ).join("");
+
   try {
     const res = await fetch("data/skills.json");
     skillsData = await res.json();
   } catch (err) {
-    gridEl.innerHTML = '<p class="empty">无法加载 data/skills.json，请确认文件存在。</p>';
+    loadingEl.classList.add("hidden");
+    emptyEl.classList.remove("hidden");
+    emptyEl.querySelector(".empty-title").textContent = "无法加载 Skill 数据";
+    emptyEl.querySelector(".empty-desc").textContent  = "请检查网络或刷新页面重试";
     console.error(err);
     return;
   }
+  loadingEl.classList.add("hidden");
   buildStats();
   buildCategories();
   applyFilters();
