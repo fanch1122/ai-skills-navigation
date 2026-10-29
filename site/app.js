@@ -1,284 +1,413 @@
-// AI Skill & Agent 导航站前端逻辑
-// 读取 data/skills.json 并进行搜索、平台筛选、分类多选筛选、排序与主题切换。
+// AI Skill & Agent Navigator — Navigation-first architecture
+// Landing → Platform Cards + Quick Categories
+// Browse  → Breadcrumb + Grouped Sections + Expandable Cards
 
-const PLATFORM_CLASS = {
-  Codex: "codex",
-  Claude: "claude",
-  "DeepSeek (DSH)": "dsh",
-  General: "general",
-};
+(function () {
+  "use strict";
 
-const PLATFORM_LABEL = {
-  Codex: "Codex",
-  Claude: "Claude",
-  "DeepSeek (DSH)": "DeepSeek",
-  General: "通用",
-};
+  // ── Platform config ──────────────────────────────────────────
+  const PLATFORM = [
+    { key: "Codex",         label: "Codex",         cls: "plat-codex",   icon: "⚡", desc: "OpenAI Codex CLI / API / Automation — 自动化工作流与子智能体" },
+    { key: "Claude",        label: "Claude",        cls: "plat-claude",  icon: "🦦", desc: "Anthropic Claude Code / Desktop — 网页设计与内容生成" },
+    { key: "DeepSeek (DSH)",label: "DeepSeek",     cls: "plat-dsh",     icon: "🔮", desc: "DeepSeek Harness — 插件化 Agent，Everything is a Plugin" },
+    { key: "General",       label: "通用",          cls: "plat-general", icon: "🌐", desc: "跨平台通用 Skills — 提示词工程、自动化、工具与资源集合" },
+  ];
 
-let skillsData = [];
+  const PLAT_LABELS = { Codex:"Codex", Claude:"Claude", "DeepSeek (DSH)":"DeepSeek", General:"通用" };
+  const BADGE_CLS   = { Codex:"codex",  Claude:"claude", "DeepSeek (DSH)":"dsh",       General:"general" };
 
-// 各元素
-const searchEl = document.getElementById("search");
-const sortEl = document.getElementById("sortSelect");
-const platformEl = document.getElementById("platformFilter");
-const categoryChipsEl = document.getElementById("categoryChips");
-const freeOnlyEl = document.getElementById("freeOnly");
-const themeToggleEl = document.getElementById("themeToggle");
-const statsEl = document.getElementById("stats");
-const countEl = document.getElementById("count");
-const gridEl = document.getElementById("grid");
-const emptyEl = document.getElementById("empty");
+  // ── State ────────────────────────────────────────────────────
+  let skillsData     = [];
+  let activePlatform = "";   // "" = all
+  let activeCats     = new Set();
+  let expandedCard   = null; // id of expanded card
 
-// 状态
-let activeCategories = new Set(); // 空集合 = 全部分类
-const platformBtnEls = Array.from(platformEl.querySelectorAll(".seg-btn"));
+  // ── DOM refs ─────────────────────────────────────────────────
+  const $ = (id) => document.getElementById(id);
+  const searchEl      = $("search");
+  const sortEl        = $("sortSelect");
+  const freeOnlyEl    = $("freeOnly");
+  const themeToggleEl = $("themeToggle");
+  const bcHome        = $("bcHome");
+  const bcPlatform    = $("bcPlatform");
+  const bcSep2        = $("bcSep2");
+  const bcCategory    = $("bcCategory");
+  const bcReset       = $("bcReset");
+  const landingEl     = $("landingState");
+  const browseEl      = $("browseState");
+  const platformGrid  = $("platformGrid");
+  const qchipGrid     = $("qchipGrid");
+  const platChipsEl   = $("platChips");
+  const catChipsWrapEl= $("catChipsWrap");
+  const platNavEl     = $("platNav");
+  const platNavInner  = $("platNavInner");
+  const sectionCont   = $("sectionsContainer");
+  const countEl       = document.createElement("p");
+  const emptyEl       = $("empty");
+  const loadingEl     = $("loading");
+  const footerCountEl = $("footerCount");
+  countEl.id = "count";
+  countEl.className = "browse-stats";
 
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function badgeFor(platform) {
-  const cls = PLATFORM_CLASS[platform] || "general";
-  const label = PLATFORM_LABEL[platform] || platform;
-  return `<span class="badge ${cls}"><span class="dot ${cls}"></span>${escapeHtml(label)}</span>`;
-}
-
-function renderCard(skill) {
-  const platforms = (skill.platform || []).map(badgeFor).join("");
-  const freeText = skill.is_free ? "免费/公益" : "付费";
-  const freeClass = skill.is_free ? "free" : "free no";
-  const tags = (skill.tags || [])
-    .map((t) => `<span class="tag">#${escapeHtml(t)}</span>`)
-    .join("");
-  const desc = escapeHtml(skill.description || "");
-  const name = escapeHtml(skill.name || "");
-  const url = skill.url || "#";
-  return `
-    <article class="card glass-panel">
-      <h3><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${name}</a></h3>
-      <div class="platforms">${platforms}</div>
-      <p class="desc">${desc}</p>
-      <div class="meta">
-        <span class="category">${escapeHtml(skill.category || "未分类")}</span>
-        <span class="${freeClass}">${freeText}</span>
-      </div>
-      ${tags ? `<div class="tags">${tags}</div>` : ""}
-    </article>`;
-}
-
-function currentlySelectedPlatform() {
-  const active = platformBtnEls.find((b) => b.classList.contains("active"));
-  return active ? active.dataset.value : "";
-}
-
-function filterSkills() {
-  const q = (searchEl.value || "").trim().toLowerCase();
-  const platform = currentlySelectedPlatform();
-  const freeOnly = freeOnlyEl.checked;
-  const hasCategoryFilter = activeCategories.size > 0;
-
-  const results = skillsData.filter((s) => {
-    if (platform && !(s.platform || []).includes(platform)) return false;
-    if (hasCategoryFilter && !activeCategories.has(s.category)) return false;
-    if (freeOnly && !s.is_free) return false;
-    if (q) {
-      const haystack = [
-        s.name,
-        s.description,
-        s.category,
-        ...(s.tags || []),
-        ...(s.platform || []),
-      ]
-        .join(" ")
-        .toLowerCase();
-      if (!haystack.includes(q)) return false;
-    }
-    return true;
+  // ── Theme ────────────────────────────────────────────────────
+  function getSavedTheme() {
+    try { return localStorage.getItem("theme") || ""; } catch (_) { return ""; }
+  }
+  function saveTheme(t) {
+    try { localStorage.setItem("theme", t); } catch (_) {}
+  }
+  function setTheme(theme) {
+    const isLight =
+      theme === "light" ||
+      (!theme && window.matchMedia("(prefers-color-scheme: light)").matches);
+    document.documentElement.dataset.theme = isLight ? "light" : "dark";
+    themeToggleEl.dataset.toggled = String(isLight);
+    saveTheme(isLight ? "light" : "");
+  }
+  function cycleTheme() {
+    const cur = document.documentElement.dataset.theme === "light" ? "light" : "dark";
+    setTheme(cur === "light" ? "dark" : "light");
+  }
+  themeToggleEl.addEventListener("click", cycleTheme);
+  themeToggleEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); cycleTheme(); }
   });
-
-  return results;
-}
-
-function sortResults(results) {
-  const mode = sortEl.value;
-  const sorted = results.slice();
-  if (mode === "name") {
-    sorted.sort((a, b) => String(a.name).localeCompare(String(b.name), "zh-Hans-CN"));
-  } else if (mode === "date") {
-    sorted.sort((a, b) =>
-      String(b.date_added || "").localeCompare(String(a.date_added || ""))
-    );
-  }
-  return sorted;
-}
-
-function applyFilters() {
-  const results = sortResults(filterSkills());
-
-  countEl.textContent = `共 ${results.length} / ${skillsData.length} 条记录`;
-  emptyEl.classList.toggle("hidden", results.length > 0);
-  gridEl.innerHTML = results.map(renderCard).join("");
-}
-
-function buildCategories() {
-  const cats = [...new Set(skillsData.map((s) => s.category).filter(Boolean))].sort(
-    (a, b) => a.localeCompare(b, "zh-Hans-CN")
-  );
-  const allChip = document.createElement("button");
-  allChip.type = "button";
-  allChip.className = "chip active";
-  allChip.dataset.value = "";
-  allChip.textContent = "全部";
-  allChip.addEventListener("click", () => {
-    activeCategories.clear();
-    updateChipState();
-    applyFilters();
-  });
-
-  categoryChipsEl.appendChild(allChip);
-
-  cats.forEach((c) => {
-    const chip = document.createElement("button");
-    chip.type = "button";
-    chip.className = "chip";
-    chip.dataset.value = c;
-    chip.textContent = c;
-    chip.addEventListener("click", () => {
-      if (activeCategories.has(c)) activeCategories.delete(c);
-      else activeCategories.add(c);
-      // 若通过点选重新选择了任一分类，则取消「全部」；全部清空时回到「全部」态
-      updateChipState();
-      applyFilters();
-    });
-    categoryChipsEl.appendChild(chip);
-  });
-}
-
-function updateChipState() {
-  const chips = categoryChipsEl.querySelectorAll(".chip");
-  chips.forEach((chip) => {
-    chip.classList.toggle("active", activeCategories.has(chip.dataset.value));
-  });
-  // 「全部」chip 在所有分类都未选中时高亮
-  const allChip = categoryChipsEl.querySelector('.chip[data-value=""]');
-  if (allChip) allChip.classList.toggle("active", activeCategories.size === 0);
-}
-
-function buildStats() {
-  const total = skillsData.length;
-  const counts = {};
-  skillsData.forEach((s) =>
-    (s.platform || []).forEach((p) => {
-      counts[p] = (counts[p] || 0) + 1;
-    })
-  );
-  const chips = [`<span class="stat"><b>${total}</b>收录 Skill</span>`];
-  for (const p of Object.keys(counts)) {
-    const cls = PLATFORM_CLASS[p] || "general";
-    const label = PLATFORM_LABEL[p] || p;
-    chips.push(
-      `<span class="stat"><span class="dot ${cls}"></span>${escapeHtml(label)}<b>${counts[p]}</b></span>`
-    );
-  }
-  statsEl.innerHTML = chips.join("");
-}
-
-/* ---------------- 主题切换 ---------------- */
-function getSavedTheme() {
-  try {
-    return localStorage.getItem("dsh-nav-theme") || "";
-  } catch (e) {
-    return "";
-  }
-}
-
-function setTheme(mode) {
-  // mode: '' (跟随系统), 'light', 'dark'
-  const root = document.documentElement;
-  if (mode === "dark" || (mode === "" && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-    root.setAttribute("data-theme", "dark");
-  } else {
-    root.setAttribute("data-theme", "light");
-  }
-  themeToggleEl.setAttribute("aria-checked", String(mode !== "light"));
-  try {
-    localStorage.setItem("dsh-nav-theme", mode);
-  } catch (e) {
-    /* ignore */
-  }
-}
-
-function cycleTheme() {
-  const current = getSavedTheme();
-  const next = current === "dark" ? "light" : "dark";
-  setTheme(next);
-}
-
-async function init() {
-  // 初始化主题
-  const savedTheme = getSavedTheme();
-  setTheme(savedTheme || "");
-
-  // 显示加载骨架（12 个占位卡）
-  const loadingEl = document.getElementById("loading");
-  document.getElementById("grid").innerHTML = "";
-  loadingEl.classList.remove("hidden");
-  loadingEl.innerHTML = Array.from({ length: 12 }, () =>
-    `<div class="skeleton" aria-hidden="true">
-       <div class="s-bar s-bar tall w60"></div>
-       <div class="s-bar s-bar short"></div>
-       <div class="s-bar s-bar"></div>
-       <div class="s-bar s-bar w75"></div>
-     </div>`
-  ).join("");
-
-  try {
-    const res = await fetch("data/skills.json");
-    skillsData = await res.json();
-  } catch (err) {
-    loadingEl.classList.add("hidden");
-    emptyEl.classList.remove("hidden");
-    emptyEl.querySelector(".empty-title").textContent = "无法加载 Skill 数据";
-    emptyEl.querySelector(".empty-desc").textContent  = "请检查网络或刷新页面重试";
-    console.error(err);
-    return;
-  }
-  loadingEl.classList.add("hidden");
-  buildStats();
-  buildCategories();
-  applyFilters();
-}
-
-// 监听变化
-searchEl.addEventListener("input", applyFilters);
-sortEl.addEventListener("change", applyFilters);
-freeOnlyEl.addEventListener("change", applyFilters);
-themeToggleEl.addEventListener("click", cycleTheme);
-themeToggleEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" || e.key === " ") {
-    e.preventDefault();
-    cycleTheme();
-  }
-});
-
-// 平台分段控件
-platformBtnEls.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    platformBtnEls.forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    applyFilters();
-  });
-});
-
-// 跟随系统主题变化
-window
-  .matchMedia("(prefers-color-scheme: dark)")
-  .addEventListener("change", () => {
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
     if (!getSavedTheme()) setTheme("");
   });
 
-init();
+  // ── Utilities ────────────────────────────────────────────────
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function badge(platform) {
+    const cls = BADGE_CLS[platform] || "general";
+    return `<span class="badge ${cls}"><span class="dot ${cls}"></span>${esc(PLAT_LABELS[platform])}</span>`;
+  }
+
+  function tag(t) {
+    return `<span class="tag">#${esc(t)}</span>`;
+  }
+
+  // ── Data helpers ─────────────────────────────────────────────
+  function filtered() {
+    let r = skillsData;
+    if (activePlatform) r = r.filter(s => (s.platform || []).includes(activePlatform));
+    if (activeCats.size) r = r.filter(s => activeCats.has(s.category));
+    if (freeOnlyEl.checked) r = r.filter(s => s.is_free);
+    const q = (searchEl.value || "").trim().toLowerCase();
+    if (q) r = r.filter(s =>
+      [s.name, s.description, s.category, ...(s.tags||[])].join(" ").toLowerCase().includes(q)
+    );
+    return r;
+  }
+
+  function sorted(r) {
+    if (sortEl.value === "name") return r.slice().sort((a,b) => a.name.localeCompare(b.name, "zh-Hans-CN"));
+    if (sortEl.value === "date") return r.slice().sort((a,b) => (b.date_added||"").localeCompare(a.date_added||""));
+    return r;
+  }
+
+  function groupedByCategory(results) {
+    const map = {};
+    for (const s of results) (map[s.category] = map[s.category]||[]).push(s);
+    const order = [...new Set(results.map(s => s.category))].sort();
+    return order.map(cat => ({ category: cat, items: map[cat] }));
+  }
+
+  // ── Breadcrumb ───────────────────────────────────────────────
+  function updateBreadcrumb() {
+    const hasPlat = !!activePlatform;
+    const hasCat  = activeCats.size > 0;
+
+    bcPlatform.textContent = hasPlat
+      ? (PLAT_LABELS[activePlatform] || activePlatform)
+      : "";
+    bcPlatform.style.display = hasPlat ? "" : "none";
+    bcPlatform.onclick = hasPlat
+      ? () => { activePlatform = ""; activeCats.clear(); updateAll(); }
+      : null;
+
+    const catNames = [...activeCats].join(" · ");
+    bcCategory.textContent = catNames;
+    bcCategory.style.display = hasCat ? "" : "none";
+    bcCategory.onclick = hasCat
+      ? () => { activeCats.clear(); updateAll(); }
+      : null;
+
+    bcSep2.style.display = (hasPlat && hasCat) ? "" : "none";
+
+    const hasFilter = hasPlat || hasCat || freeOnlyEl.checked || searchEl.value.trim();
+    bcReset.style.display = hasFilter ? "" : "none";
+    bcHome.classList.toggle("active", !hasPlat && !hasCat);
+  }
+  bcHome.onclick = () => { activePlatform = ""; activeCats.clear(); updateAll(); };
+  bcReset.onclick = () => {
+    activePlatform = ""; activeCats.clear();
+    freeOnlyEl.checked = false; searchEl.value = "";
+    updateAll();
+  };
+
+  // ── Landing: Platform cards + Quick category chips ─────────────
+  function renderLanding() {
+    // Platform cards
+    const byPlat = {};
+    skillsData.forEach(s => (s.platform||[]).forEach(p => (byPlat[p]=(byPlat[p]||0)+1));
+
+    platformGrid.innerHTML = PLATFORM.map((p, i) => {
+      const cnt = byPlat[p.key] || 0;
+      if (cnt === 0) return "";
+      const topCats = [...new Set(skillsData.filter(s => (s.platform||[]).includes(p.key)).map(s=>s.category)]
+        .slice(0, 4);
+      return `
+        <div class="plat-card ${p.cls}"
+             role="button"
+             tabindex="0"
+             data-platform="${esc(p.key)}"
+             aria-label="${esc(p.label)} — ${cnt} 个 Skill"
+             style="animation-delay:${i*80}ms">
+          <div class="plat-dot" aria-hidden="true">${p.icon}</div>
+          <h3>${esc(p.label)}</h3>
+          <p class="plat-desc">${esc(p.desc)}</p>
+          <div class="plat-meta">
+            <span class="plat-num">${cnt}</span>
+            <span class="plat-num-label">Skill${cnt!==1?'s':''}</span>
+          </div>
+          ${topCats.length ? `<div class="plat-tags">${topCats.map(c=`<span class="plat-tag">${esc(c)}</span>`).join("")}</div>` : ""}
+          <span class="plat-arrow" aria-hidden="true">→</span>
+        </div>`;
+    }).join("");
+
+    // Click platform card
+    platformGrid.querySelectorAll(".plat-card").forEach(el => {
+      el.addEventListener("click", () => {
+        activePlatform = el.dataset.platform;
+        activeCats.clear();
+        renderBrowse();
+      });
+      el.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.click(); }
+      });
+    });
+
+    // Quick category chips
+    const catCount = {};
+    skillsData.forEach(s => (catCount[s.category] = (catCount[s.category]||0)+1);
+    const cats = Object.entries(catCount).sort((a,b) => b[1]-a[1]);
+    qchipGrid.innerHTML = cats.map(([cat, cnt]) =>
+      `<button type="button" class="qchip" data-cat="${esc(cat)}" aria-label="分类：${esc(cat)}，${cnt} 条">
+        ${esc(cat)} <span class="qchip-count">${cnt}</span>
+      </button>`
+    ).join("");
+    qchipGrid.querySelectorAll(".qchip").forEach(el => {
+      el.addEventListener("click", () => {
+        activeCats.clear();
+        activeCats.add(el.dataset.cat);
+        renderBrowse();
+      });
+    });
+
+    // Footer count
+    footerCountEl.textContent = skillsData.length;
+  }
+
+  // ── Browse: Sticky platform chips + Category chips ────────────
+  function renderBrowse() {
+    updateBreadcrumb();
+    if (!activePlatform) {
+      // Show platform quick-nav
+      const byPlat = {};
+      skillsData.forEach(s => (s.platform||[]).forEach(p => (byPlat[p]=(byPlat[p]||0)+1));
+      platNavEl.style.display = "";
+      const sortedPlats = PLATFORM.filter(p => byPlat[p.key]);
+      platNavInner.innerHTML = sortedPlats.map(p =>
+        `<button type="button" class="pnav-chip" data-platform="${esc(p.key)}" aria-label="${esc(p.label)} ${byPlat[p.key]||0}">
+          <span class="dot ${BADGE_CLS[p.key]}"></span>${esc(p.label)} <b>${byPlat[p.key]||0}</b>
+        </button>`
+      ).join("");
+      platNavInner.querySelectorAll(".pnav-chip").forEach(el => {
+        el.addEventListener("click", () => {
+          activePlatform = el.dataset.platform;
+          renderBrowse();
+        });
+      });
+    } else {
+      platNavEl.style.display = "none";
+    }
+
+    // Category chips in sticky bar (only show when platform selected)
+    if (activePlatform) {
+      const cats = {};
+      skillsData.filter(s => (s.platform||[]).includes(activePlatform))
+        .forEach(s => (cats[s.category]=(cats[s.category]||0)+1));
+      const list = Object.entries(cats).sort((a,b) => b[1]-a[1]);
+      catChipsWrapEl.style.display = (activeCats.size === 0 && list.length > 4) ? "none" : "";
+      catChipsWrapEl.innerHTML = list.map(([cat,cnt]) =>
+        `<button type="button" class="cat-chip${activeCats.has(cat)?" on":""}" data-cat="${esc(cat)}">
+          ${esc(cat)} <span style="opacity:.6">${cnt}</span>
+        </button>`
+      ).join("");
+      catChipsWrapEl.querySelectorAll(".cat-chip").forEach(el => {
+        el.addEventListener("click", () => {
+          if (activeCats.has(el.dataset.cat)) { activeCats.delete(el.dataset.cat); }
+          else { activeCats.add(el.dataset.cat); }
+          renderBrowse();
+        });
+      });
+    } else {
+      catChipsWrapEl.style.display = "none";
+    }
+
+    renderResults();
+  }
+
+  // ── Results: Grouped sections ────────────────────────────────
+  function renderResults() {
+    const results = sorted(filtered());
+    const groups = groupedByCategory(results);
+    const hasFilter = activePlatform || activeCats.size || freeOnlyEl.checked || searchEl.value.trim();
+
+    // Stats pill
+    if (results.length === skillsData.length) {
+      countEl.innerHTML = `<span class="stat-pill"><b>${results.length}</b> 个 Skill · <b>${groups.length}</b> 个分类</span>`;
+    } else {
+      countEl.innerHTML = `<span class="stat-pill"><b>${results.length}</b> / ${skillsData.length}</span>
+        ${hasFilter ? `<button type="button" onclick="document.getElementById('bcReset').click()"
+          style="appearance:none;background:none;border:none;color:var(--accent);font-size:.78rem;cursor:pointer;">重置 →</button>` : ""}`;
+    }
+
+    if (results.length === 0) {
+      sectionCont.innerHTML = "";
+      emptyEl.classList.remove("hidden");
+    } else {
+      emptyEl.classList.add("hidden");
+      sectionCont.innerHTML = groups.map(g => `
+        <section class="section-group" aria-label="${esc(g.category)}">
+          <div class="section-header" role="heading" aria-level="2">
+            <span class="section-title">${esc(g.category)}</span>
+            <span class="section-count">${g.items.length} 条</span>
+          </div>
+          <div class="section-cards">
+            ${g.items.map(s => renderSkillCard(s)).join("")}
+          </div>
+        </section>
+      `).join("");
+      // Card click to expand
+      sectionCont.querySelectorAll(".card").forEach(el => {
+        el.addEventListener("click", (e) => {
+          if (e.target.closest("a")) return; // don't intercept link clicks
+          const id = el.dataset.id;
+          if (expandedCard === id) {
+            el.classList.remove("expanded");
+            expandedCard = null;
+          } else {
+            sectionCont.querySelectorAll(".card.expanded").forEach(c => c.classList.remove("expanded"));
+            el.classList.add("expanded");
+            expandedCard = id;
+          }
+        });
+      });
+    }
+  }
+
+  function renderSkillCard(s) {
+    const url = esc(s.url || "#");
+    const platforms = (s.platform||[]).map(badge).join("");
+    const tags = (s.tags||[]).map(tag).join("");
+    const free = s.is_free ? "免费/公益" : "付费";
+    const freeCls = s.is_free ? "free" : "free no";
+    return `
+      <article class="card glass-panel" data-id="${esc(s.id)}" tabindex="0" role="article"
+               aria-label="${esc(s.name)}，${free}">
+        <div class="card-body">
+          <div class="card-title">
+            <a href="${url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${esc(s.name)}</a>
+          </div>
+          <div class="platforms">${platforms}</div>
+          <p class="desc">${esc(s.description||"")}</p>
+        </div>
+        <div class="card-meta">
+          <span class="category">${esc(s.category)}</span>
+          <span class="${freeCls}">${free}</span>
+        </div>
+        ${tags ? `<div class="tags">${tags}</div>` : ""}
+        <a href="${url}" target="_blank" rel="noopener noreferrer"
+           class="card-link-arrow" onclick="event.stopPropagation()"
+           aria-label="打开 ${esc(s.name)}">
+          GitHub → <span style="font-size:.7rem">↗</span>
+        </a>
+        <span class="card-expand-hint" aria-hidden="true">点击展开</span>
+      </article>`;
+  }
+
+  function updateAll() {
+    updateBreadcrumb();
+    if (!activePlatform && activeCats.size === 0) {
+      landingEl.style.display = "";
+      browseEl.style.display = "none";
+    } else {
+      landingEl.style.display = "none";
+      browseEl.style.display = "";
+      renderBrowse();
+    }
+  }
+
+  // ── Filter events ────────────────────────────────────────────
+  searchEl.addEventListener("input", updateAll);
+  sortEl.addEventListener("change", updateAll);
+  freeOnlyEl.addEventListener("change", updateAll);
+
+  // ── Show sticky bar only when browsing ────────────────────────
+  const stickyBar = $("stickyBar");
+  let lastScrollY = 0;
+  window.addEventListener("scroll", () => {
+    const y = window.scrollY;
+    if (activePlatform || activeCats.size > 0) {
+      stickyBar.classList.toggle("hidden", y < 80);
+    } else {
+      stickyBar.classList.add("hidden");
+    }
+    lastScrollY = y;
+  }, { passive: true });
+
+  // ── Init ────────────────────────────────────────────────────
+  async function init() {
+    setTheme(getSavedTheme());
+
+    // Show loading skeleton (8 cards)
+    landingEl.style.display = "none";
+    browseEl.style.display = "";
+    loadingEl.classList.remove("hidden");
+    loadingEl.innerHTML = Array.from({length: 8}, () =>
+      `<div class="skeleton" aria-hidden="true">
+         <div class="s-bar s-bar tall w60"></div>
+         <div class="s-bar" style="width:80%"></div>
+         <div class="s-bar short"></div>
+         <div class="s-bar w75"></div>
+       </div>`
+    ).join("");
+
+    try {
+      const res = await fetch("data/skills.json");
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      skillsData = await res.json();
+      if (!Array.isArray(skillsData)) throw new Error("bad JSON");
+    } catch (err) {
+      landingEl.style.display = "";
+      browseEl.style.display = "none";
+      loadingEl.classList.add("hidden");
+      footerCountEl.textContent = "?";
+      console.error(err);
+      return;
+    }
+
+    loadingEl.classList.add("hidden");
+    renderLanding();
+    updateAll();
+  }
+
+  init();
+})();

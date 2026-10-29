@@ -3,25 +3,42 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="AI Skill & Agent 导航站：收录 Codex、Claude、DeepSeek(DSH) 等平台的公益与开源 Skill。" />
-  <title>AI Skill & Agent 导航站</title>
+  <meta name="description" content="AI Skill &amp; Agent 导航站：收录 Codex、Claude、DeepSeek(DSH) 等平台的公益与开源 Skill，支持按平台、分类筛选搜索。" />
+  <title>AI Skill &amp; Agent 导航站</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="hero">
+
+  <!-- ═══════════ Header / Hero ═══════════ -->
+  <header class="site-header" id="siteHeader">
     <div class="container">
-      <div class="hero-accent" aria-hidden="true"></div>
-      <div class="hero-top">
+      <!-- Breadcrumb navigation -->
+      <nav class="breadcrumb" id="breadcrumb" aria-label="当前位置">
+        <span class="bc-item bc-home active" id="bcHome">
+          <span aria-hidden="true">⌂</span> 全部
+        </span>
+        <span class="bc-sep" aria-hidden="true">›</span>
+        <span class="bc-item bc-platform" id="bcPlatform" aria-current="true"></span>
+        <span class="bc-sep" id="bcSep2" aria-hidden="true" style="display:none">›</span>
+        <span class="bc-item bc-category" id="bcCategory" aria-current="true"></span>
+        <button type="button" class="bc-reset" id="bcReset" aria-label="重置所有筛选" style="display:none">✕ 重置</button>
+      </nav>
+
+      <!-- Brand row -->
+      <div class="hero-brand">
         <div class="brand">
           <span class="brand-icon" aria-hidden="true">🤖</span>
-          <h1>AI Skill &amp; Agent 导航站</h1>
+          <div>
+            <h1>AI Skill &amp; Agent</h1>
+            <p class="sub">公益 · 开源 · 跨平台</p>
+          </div>
         </div>
         <div
           class="theme-switch"
           id="themeToggle"
           role="switch"
           aria-checked="false"
-          aria-label="切换外观主题"
+          aria-label="切换主题"
           tabindex="0"
         >
           <span class="theme-icon theme-sun" aria-hidden="true">☀️</span>
@@ -29,69 +46,93 @@
           <span class="theme-icon theme-moon" aria-hidden="true">🌙</span>
         </div>
       </div>
-      <p class="subtitle">收录 Codex · Claude · DeepSeek (DSH) 等平台的公益与开源 Skill</p>
 
-      <div class="toolbar glass-panel">
-        <input
-          type="search"
-          id="search"
-          placeholder="搜索名称、描述或标签…"
-          aria-label="搜索 Skill"
-        />
-        <div class="sort-wrap">
-          <label for="sortSelect">排序</label>
-          <select id="sortSelect" aria-label="排序">
-            <option value="default">默认</option>
-            <option value="name">名称 A-Z</option>
-            <option value="date">最新添加</option>
-          </select>
-        </div>
-        <label class="free-toggle">
-          <input type="checkbox" id="freeOnly" />
-          仅看免费
-        </label>
-      </div>
-
-      <div class="filter-group">
-        <span class="filter-label">平台</span>
-        <div class="segmented" id="platformFilter" role="group" aria-label="按平台筛选">
-          <button type="button" class="seg-btn active" data-value="">全部</button>
-          <button type="button" class="seg-btn" data-value="Codex"><span class="dot codex"></span>Codex</button>
-          <button type="button" class="seg-btn" data-value="Claude"><span class="dot claude"></span>Claude</button>
-          <button type="button" class="seg-btn" data-value="DeepSeek (DSH)"><span class="dot dsh"></span>DeepSeek</button>
-          <button type="button" class="seg-btn" data-value="General"><span class="dot general"></span>通用</button>
+      <!-- Sticky compact filter bar — becomes visible on scroll -->
+      <div class="sticky-bar glass-panel" id="stickyBar" aria-label="筛选工具栏">
+        <div class="sticky-bar-inner">
+          <input
+            type="search"
+            id="search"
+            placeholder="搜索 Skill…"
+            aria-label="搜索 Skill"
+            class="sticky-search"
+          />
+          <div class="sort-wrap">
+            <label for="sortSelect" class="sr-only">排序</label>
+            <select id="sortSelect" aria-label="排序">
+              <option value="default">默认排序</option>
+              <option value="name">名称 A→Z</option>
+              <option value="date">最新添加</option>
+            </select>
+          </div>
+          <label class="free-toggle">
+            <input type="checkbox" id="freeOnly" />
+            <span>仅免费</span>
+          </label>
+          <!-- Platform chips in sticky bar -->
+          <div class="plat-chips" id="platChips" role="group" aria-label="按平台筛选"></div>
+          <!-- Category chips in sticky bar -->
+          <div class="cat-chips" id="catChipsWrap" aria-label="按分类筛选"></div>
         </div>
       </div>
-
-      <div class="filter-group">
-        <span class="filter-label">分类</span>
-        <div class="chips" id="categoryChips" aria-label="按分类筛选（可多选）"></div>
-      </div>
-
-      <div id="stats" class="stats"></div>
     </div>
   </header>
 
-  <main class="container">
-    <p id="count" class="count"></p>
-    <div id="grid" class="grid"></div>
-    <div id="empty" class="empty hidden" role="status" aria-live="polite">
+  <!-- ═══════════ Main Content ═══════════ -->
+  <main class="container" id="mainContent">
+    <!-- State: Landing — show platform cards -->
+    <section id="landingState" class="landing" aria-label="平台总览">
+      <div class="landing-head">
+        <div class="hero-accent" aria-hidden="true"></div>
+        <h2 class="landing-title">选择一个平台开始探索</h2>
+        <p class="landing-sub">或使用上方筛选器精确查找</p>
+      </div>
+
+      <!-- Platform entry cards (rendered by JS) -->
+      <div class="platform-grid" id="platformGrid" aria-label="平台入口"></div>
+
+      <!-- Quick category chips (show all categories, no platform filter) -->
+      <div class="quick-cats" aria-label="快速分类">
+        <h3 class="section-heading">全部分类</h3>
+        <div class="qchip-grid" id="qchipGrid"></div>
+      </div>
+    </section>
+
+    <!-- State: Browsing — show grouped skill sections -->
+    <section id="browseState" class="browse" aria-label="Skill 列表" style="display:none">
+      <!-- Stats bar -->
+      <div class="browse-stats" id="browseStats" aria-live="polite"></div>
+
+      <!-- Platform quick-nav (show when no platform filter) -->
+      <div class="plat-nav" id="platNav" aria-label="平台快速跳转" style="display:none">
+        <div class="plat-nav-inner" id="platNavInner"></div>
+      </div>
+
+      <!-- Grouped sections (rendered by JS) -->
+      <div id="sectionsContainer"></div>
+    </section>
+
+    <!-- Loading skeleton -->
+    <div id="loading" class="loading-grid hidden" aria-label="加载中" aria-live="polite"></div>
+
+    <!-- Empty state -->
+    <div id="empty" class="empty-state hidden" role="status" aria-live="polite">
       <span class="empty-icon" aria-hidden="true">• • •</span>
       <p class="empty-title">没有匹配的 Skill</p>
-      <p class="empty-desc">换个关键词，或清除筛选条件</p>
+      <p class="empty-desc">试试换关键词，或点击上方筛选器调整条件</p>
+      <button type="button" class="empty-reset" onclick="document.getElementById('bcReset').click()">
+        ← 重置筛选
+      </button>
     </div>
-
-    <!-- 加载骨架（JS 渲染） -->
-    <div id="loading" class="loading-grid hidden" aria-label="加载中" aria-live="polite"></div>
   </main>
 
-  <footer class="footer">
+  <!-- ═══════════ Footer ═══════════ -->
+  <footer class="footer" role="contentinfo">
     <div class="container">
-      <p>数据来源：<code>data/skills.json</code> · 提交新 Skill 请看 <code>SKILL.md</code></p>
-      <p>平台标签：<span class="badge codex">Codex</span>
-        <span class="badge claude">Claude</span>
-        <span class="badge dsh">DeepSeek</span>
-        <span class="badge general">通用</span>
+      <p>
+        数据来源 <code>data/skills.json</code>
+        · 提交新 Skill 参照 <code>SKILL.md</code>
+        · 共 <strong id="footerCount">—</strong> 条
       </p>
     </div>
   </footer>
