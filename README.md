@@ -226,6 +226,7 @@ git push origin main
 | `skill-066` | [dongshuyan/compass-skills](https://github.com/dongshuyan/compass-skills) | Claude、Codex | ✅ | 司南：个性化 AI 任务总控 Skills 系统，本地优先的个人对齐 OS。 |
 | `skill-067` | [sawyerhood/dev-browser](https://github.com/SawyerHood/dev-browser) | Claude | ✅ | Claude Skill：让你的 Agent 能用网页浏览器（基于 Playwright）。 |
 | `skill-068` | [citrolabs/ego-lite](https://github.com/citrolabs/ego-lite) | Codex、Claude | ✅ | 为 AI Agent 打造的最快浏览器自动化：共享你的登录态给 Codex/Claude Code，零成本零配置。 |
+| `skill-116` | [agent-qa](https://github.com/vostride/agent-qa) | 通用 | ✅ | 自然语言网页/移动端 QA，具备记忆引擎、自我改进及本地 stdio MCP；早期版本需 Node.js 24+，FSL-1.1-ALv2 限制竞争性商业用途，许可内软件免费，模型/设备成本另计；官网：https://vostride.com |
 
 ### 视频创作
 

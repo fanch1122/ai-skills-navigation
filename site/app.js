@@ -155,12 +155,12 @@
   function renderLanding() {
     // Platform cards
     const byPlat = {};
-    skillsData.forEach(s => (s.platform||[]).forEach(p => (byPlat[p]=(byPlat[p]||0)+1));
+    skillsData.forEach(s => (s.platform||[]).forEach(p => (byPlat[p]=(byPlat[p]||0)+1)));
 
     platformGrid.innerHTML = PLATFORM.map((p, i) => {
       const cnt = byPlat[p.key] || 0;
       if (cnt === 0) return "";
-      const topCats = [...new Set(skillsData.filter(s => (s.platform||[]).includes(p.key)).map(s=>s.category)]
+      const topCats = [...new Set(skillsData.filter(s => (s.platform||[]).includes(p.key)).map(s=>s.category))]
         .slice(0, 4);
       return `
         <div class="plat-card ${p.cls}"
@@ -176,7 +176,7 @@
             <span class="plat-num">${cnt}</span>
             <span class="plat-num-label">Skill${cnt!==1?'s':''}</span>
           </div>
-          ${topCats.length ? `<div class="plat-tags">${topCats.map(c=`<span class="plat-tag">${esc(c)}</span>`).join("")}</div>` : ""}
+          ${topCats.length ? `<div class="plat-tags">${topCats.map(c=>`<span class="plat-tag">${esc(c)}</span>`).join("")}</div>` : ""}
           <span class="plat-arrow" aria-hidden="true">→</span>
         </div>`;
     }).join("");
@@ -186,7 +186,7 @@
       el.addEventListener("click", () => {
         activePlatform = el.dataset.platform;
         activeCats.clear();
-        renderBrowse();
+        updateAll();
       });
       el.addEventListener("keydown", e => {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.click(); }
@@ -195,7 +195,7 @@
 
     // Quick category chips
     const catCount = {};
-    skillsData.forEach(s => (catCount[s.category] = (catCount[s.category]||0)+1);
+    skillsData.forEach(s => (catCount[s.category] = (catCount[s.category]||0)+1));
     const cats = Object.entries(catCount).sort((a,b) => b[1]-a[1]);
     qchipGrid.innerHTML = cats.map(([cat, cnt]) =>
       `<button type="button" class="qchip" data-cat="${esc(cat)}" aria-label="分类：${esc(cat)}，${cnt} 条">
@@ -206,7 +206,7 @@
       el.addEventListener("click", () => {
         activeCats.clear();
         activeCats.add(el.dataset.cat);
-        renderBrowse();
+        updateAll();
       });
     });
 
@@ -220,7 +220,7 @@
     if (!activePlatform) {
       // Show platform quick-nav
       const byPlat = {};
-      skillsData.forEach(s => (s.platform||[]).forEach(p => (byPlat[p]=(byPlat[p]||0)+1));
+      skillsData.forEach(s => (s.platform||[]).forEach(p => (byPlat[p]=(byPlat[p]||0)+1)));
       platNavEl.style.display = "";
       const sortedPlats = PLATFORM.filter(p => byPlat[p.key]);
       platNavInner.innerHTML = sortedPlats.map(p =>
