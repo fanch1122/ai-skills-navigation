@@ -1988,5 +1988,23 @@
       "市场"
     ],
     "date_added": "2026-09-03"
+  },
+  {
+    "id": "skill-116",
+    "name": "小红书图文与实况图·红鸦 AI",
+    "platform": [
+      "General"
+    ],
+    "category": "内容创作",
+    "url": "https://github.com/xiaoxuux/redya-skills/tree/73a1529fd3cb9303195b7370d492dbf57a6b7604/skill/redya-xiaohongshu",
+    "description": "按主题、商品图或参考笔记批量生成图文和 Live 实况图，可通过插件发布；生成需自备红鸦 API Key 和积分。",
+    "is_free": false,
+    "tags": [
+      "小红书",
+      "图文创作",
+      "实况图",
+      "开源"
+    ],
+    "date_added": "2026-11-20"
   }
 ]
