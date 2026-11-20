@@ -124,6 +124,7 @@ git push origin main
 | `skill-056` | [zenstory-ai oh-story-claudecode](https://github.com/zenstory-ai/oh-story-claudecode) | Claude | ✅ | 网文/小说写作 skill 包：扫榜、拆文、写作、去 AI 味、封面图全流程（中文）。 |
 | `skill-057` | [blader/humanizer](https://github.com/blader/humanizer) | Claude、Codex | ✅ | 去除文本中 AI 写作痕迹的 Agent skill。 |
 | `skill-058` | [titanwings/distilly](https://github.com/titanwings/distilly) | Claude、Codex | ✅ | 把他人思考方式蒸馏成可在任意 Agent/Bot 复用的 Skills（前身同事 Skill）。 |
+| `skill-116` | [小红书图文与实况图·红鸦 AI](https://github.com/xiaoxuux/redya-skills/tree/73a1529fd3cb9303195b7370d492dbf57a6b7604/skill/redya-xiaohongshu) | 通用 | ❌ | 按主题、商品图或参考笔记批量生成图文和 Live 实况图，可通过插件发布；生成需自备红鸦 API Key 和积分。 |
 
 ### 安全与攻防
 
